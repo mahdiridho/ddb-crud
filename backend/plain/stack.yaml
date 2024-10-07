@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+
+  # DynamoDB Table
+  NoobAppDynamoDBTable:
+    Type: "AWS::DynamoDB::Table"
+    Properties:
+      TableName: "NoobAppDynamoTable"
+      BillingMode: "PAY_PER_REQUEST"  # On-demand capacity
+      AttributeDefinitions:
+        - AttributeName: "PK"
+          AttributeType: "S"
+        - AttributeName: "SK"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "PK"
+          KeyType: "HASH"  # Partition key
+        - AttributeName: "SK"
+          KeyType: "RANGE"  # Sort key
+
+  # IAM Role for Authenticated Users
+  NoobAppAuthenticatedRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "NoobAppAuthenticatedRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Federated: "cognito-identity.amazonaws.com"
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": !Ref NoobAppCognitoIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": "authenticated"
+      Policies:
+        - PolicyName: "NoobAppCognitoAuthorizedPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "dynamodb:PutItem"
+                  - "dynamodb:GetItem"
+                  - "dynamodb:UpdateItem"
+                  - "dynamodb:DeleteItem",
+                  - "dynamodb:Query"
+                Resource: !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/NoobAppDynamoTable"
+
+  # Cognito Identity Pool
+  NoobAppCognitoIdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: "NoobAppIdentityPool"
+      AllowUnauthenticatedIdentities: false  # Only authenticated users
+      CognitoIdentityProviders:
+        - ClientId: !Ref NoobAppCognitoUserPoolClient
+          ProviderName: !Sub "cognito-idp.${AWS::Region}.amazonaws.com/${NoobAppCognitoUserPool}"
+
+  # Cognito Identity Pool Role Attachment
+  NoobAppCognitoIdentityPoolRoleAttachment:
+    Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+    Properties:
+      IdentityPoolId: !Ref NoobAppCognitoIdentityPool
+      Roles:
+        authenticated: !GetAtt NoobAppAuthenticatedRole.Arn
+
+  # Cognito User Pool
+  NoobAppCognitoUserPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: "NoobAppUserPool"
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      AliasAttributes:
+        - email  # Allow email alias login
+      UsernameConfiguration:
+        CaseSensitive: true  # Enforces case sensitivity for usernames
+      MfaConfiguration: "OFF"
+      EmailVerificationMessage: "Your verification code is {####}."
+      EmailVerificationSubject: "Your verification code"
+      VerificationMessageTemplate:
+        DefaultEmailOption: "CONFIRM_WITH_CODE"
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: "verified_email"
+            Priority: 1
+      Schema:
+        - AttributeDataType: "String"
+          Name: "email"
+          Required: true
+          Mutable: true
+        - AttributeDataType: "String"
+          Name: "preferred_username"
+          Mutable: true
+          Required: false
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      EmailConfiguration:
+        EmailSendingAccount: "COGNITO_DEFAULT"
+
+  # Cognito User Pool Client
+  NoobAppCognitoUserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties: 
+      ClientName: "NoobAppUserPoolClient"
+      UserPoolId: !Ref NoobAppCognitoUserPool
+      ExplicitAuthFlows: 
+        - "ALLOW_USER_PASSWORD_AUTH"
+        - "ALLOW_REFRESH_TOKEN_AUTH"
+      GenerateSecret: false
+      SupportedIdentityProviders: 
+        - COGNITO
+      AllowedOAuthFlows: 
+        - "code"  # Enables authorization code flow for OAuth 2.0
+      AllowedOAuthScopes: 
+        - "email"
+        - "openid"
+        - "profile"  # Profile information scope
+      AllowedOAuthFlowsUserPoolClient: true  # Enables OAuth 2.0 on the client
+      CallbackURLs: 
+        - "http://localhost:8081"
+      LogoutURLs: 
+        - "http://localhost:8081"
+      PreventUserExistenceErrors: ENABLED
+
+  # Cognito User Pool Domain
+  NoobAppCognitoUserPoolDomain:
+    Type: "AWS::Cognito::UserPoolDomain"
+    Properties:
+      Domain: "noob-app-user-pool"
+      UserPoolId: !Ref NoobAppCognitoUserPool
+
