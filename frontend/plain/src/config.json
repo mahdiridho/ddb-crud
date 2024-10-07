@@ -1,0 +1,8 @@
+{
+    "poolname": "<COGNITO_USER_POOL_NAME>",
+    "poolid": "<COGNITO_USER_POOL_ID>",
+    "region": "<AWS_REGION>",
+    "clientId": "<COGNITO_USER_POOL_CLIENT_ID>",
+    "identitypool": "<COGNITO_IDENTITY_POOL_ID>",
+    "ddbTable": "<DYNAMODB_TABLE_NAME>"
+}

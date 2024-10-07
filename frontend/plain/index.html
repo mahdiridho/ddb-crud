@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta name="description" content="Borderless Voice Communicator">
+  <meta name="theme-color" content="#ffffff">
+  <title>Plain Architecture</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta charset="UTF-8">
+</head>
+<body>
+  <div id="demo"></div>
+
+  <script type="module">
+    import { html, render } from 'lit-html';
+    import './src/noob-app.js';
+
+    render(
+      html`
+        <noob-app></noob-app>
+      `,
+      document.querySelector('#demo')
+    );
+  </script>
+</body>
+
+</html>

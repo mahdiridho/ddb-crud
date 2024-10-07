@@ -1,0 +1,28 @@
+{
+  "name": "noob-app",
+  "version": "1.0.0",
+  "description": "Noob App to learn one Anti Pattern Architecture",
+  "main": "index.js",
+  "scripts": {
+    "start": "vite --port 8081 --open /"
+  },
+  "keywords": [
+    "aws",
+    "serverless"
+  ],
+  "homepage": "https://github.com/mahdiridho/ddb-crud/",
+  "author": "Mahdi Ridho",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-cognito-identity": "^3.600.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.665.0",
+    "@aws-sdk/client-dynamodb": "^3.665.0",
+    "@aws-sdk/credential-provider-cognito-identity": "^3.600.0",
+    "@aws-sdk/lib-dynamodb": "^3.665.0",
+    "lit": "^2.0.2"
+  },
+  "devDependencies": {
+    "vite": "^5.2.11",
+    "vite-plugin-node-polyfills": "^0.22.0"
+  }
+}
